@@ -1,10 +1,10 @@
 #BBUncrustifyPlugin-Xcode
 
-Xcode plugin to [uncrustify](http://uncrustify.sourceforge.net) code in Xcode. 
+Xcode plugin to [uncrustify](https://github.com/bengardner/uncrustify) code in Xcode. 
 
 ## Requirements
 
-Tested with Xcode 4.6+ on OS X 10.7 or higher.
+Tested with Xcode 3.2.6 on OS X 10.6.8.
 
 ## Installation
 
@@ -16,6 +16,8 @@ To uninstall, just remove the plugin from `~/Library/Application Support/Develop
 
 ## How does it work?
 
+* Use the menu `Edit > Uncrustify Selection` to uncrustify the selected source code (multiple selection is not supported).
+
 * Use the menu `Edit > Uncrustify Selected Files` to uncrustify the selected items in the project navigator.
 
 * Use the menu `Edit > Uncrustify Active File` to uncrustify the source file actually opened in the editor. 
@@ -24,7 +26,7 @@ To uninstall, just remove the plugin from `~/Library/Application Support/Develop
 
 PS: Modifications are recorded in the undo. So undo reverts the modifications.
 
-You can create keyboard shortcuts for the menu items in the [Keyboard Preferences](http://support.apple.com/kb/ph3957) of OS X System Preferences.
+You can create keyboard shortcuts for the menu items in the [Keyboard Preferences](http://support.apple.com/kb/ph6896) of OS X System Preferences.
 
 
 ## How to customize the uncrustify configuration?
@@ -71,9 +73,9 @@ Once UncrustifyX is installed, the plugin will add a menu item `Open with Uncrus
 
 After uncrustification, the plugin:
 
-* performs a syntax-aware indenting if checked in the Xcode preferences (Preferences > Text Editing > Indentation > Syntax-aware indenting).
+* performs a syntax-aware indenting if checked in the Xcode preferences (Preferences > Indentation > Syntax-aware indenting).
 
-* Trims trailing whitespaces and white-only lines if checked in the Xcode preferences (Preferences > Text Editing > Editing).
+* Trims trailing whitespaces and white-only lines if not checked in the Xcode preferences (Preferences > Google > Correct Whitespace On Save).
 
 
 ## Creator
