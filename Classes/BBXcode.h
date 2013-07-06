@@ -8,32 +8,19 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface DVTTextDocumentLocation : NSObject
-@property (readonly) NSRange characterRange;
-@property (readonly) NSRange lineRange;
+@interface NSTextView (PBXTextViewFindExtensions)
+- (BOOL)replaceCurrentSelectionWithString:(NSString *)string;
 @end
 
-@interface DVTTextPreferences : NSObject
-+ (id)preferences;
-@property BOOL trimWhitespaceOnlyLines;
-@property BOOL trimTrailingWhitespace;
-@property BOOL useSyntaxAwareIndenting;
-@end
-
-@interface DVTSourceTextStorage : NSTextStorage
+@interface PBXTextStorage : NSTextStorage
 - (void)replaceCharactersInRange:(NSRange)range withString:(NSString *)string withUndoManager:(id)undoManager;
 - (NSRange)lineRangeForCharacterRange:(NSRange)range;
 - (NSRange)characterRangeForLineRange:(NSRange)range;
 - (void)indentCharacterRange:(NSRange)range undoManager:(id)undoManager;
 @end
 
-@interface DVTFileDataType : NSObject
-@property (readonly) NSString *identifier;
-@end
-
 @interface DVTFilePath : NSObject
 @property (readonly) NSURL *fileURL;
-@property (readonly) DVTFileDataType *fileDataTypePresumed;
 @end
 
 @interface IDEContainerItem : NSObject
@@ -53,59 +40,45 @@
 @property (readonly) id representedObject;
 @end
 
-@interface IDEFileNavigableItem : IDENavigableItem
-@property (readonly) DVTFileDataType *documentType;
-@property (readonly) NSURL *fileURL;
+@interface PBXFileReference : NSObject
+- (id)fileType;
 @end
 
-@interface IDEStructureNavigator : NSObject
-@property (retain) NSArray *selectedObjects;
+@interface PBXSmartGroupTreeModule : NSObject
+- (id)selectedProjectItems;
+@end
+
+@interface PBXProjectModule : NSObject
+- (id)keyModules;
+@end
+
+@interface PBXFileType : NSObject
+- (BOOL)isSourceCode;
+- (id)languageSpecificationIdentifier;
 @end
 
 @interface IDENavigableItemCoordinator : NSObject
 - (id)structureNavigableItemForDocumentURL:(id)arg1 inWorkspace:(id)arg2 error:(id *)arg3;
 @end
 
-@interface IDENavigatorArea : NSObject
-- (id)currentNavigator;
+@interface PBXSourceFileDocument : NSDocument
++ (id)fileDocumentForFileReference:(id)fp8 loadIfNeeded:(BOOL)fp12;
+- (id)selection;
+- (id)textStorage;
 @end
 
-@interface IDEWorkspaceTabController : NSObject
-@property (readonly) IDENavigatorArea *navigatorArea;
-@end
-
-@interface IDEDocumentController : NSDocumentController
-+ (id)editorDocumentForNavigableItem:(id)arg1;
-+ (id)retainedEditorDocumentForNavigableItem:(id)arg1 error:(id *)arg2;
-+ (void)releaseEditorDocument:(id)arg1;
-@end
-
-@interface IDESourceCodeDocument : NSDocument
-- (DVTSourceTextStorage *)textStorage;
-- (NSUndoManager *)undoManager;
-@end
-
-@interface IDESourceCodeComparisonEditor : NSObject
-@property (readonly) NSTextView *keyTextView;
-@property (retain) NSDocument *primaryDocument;
-@end
-
-@interface IDESourceCodeEditor : NSObject
+@interface PBXSourceFileEditor : NSObject
 @property (retain) NSTextView *textView;
-- (IDESourceCodeDocument *)sourceCodeDocument;
+- (id)_sourceFileDocument;
 @end
 
-@interface IDEEditorContext : NSObject
-- (id)editor; // returns the current editor. If the editor is the code editor, the class is `IDESourceCodeEditor`
+@interface PBXFileNavigator : NSObject
+- (id)fileEditor;
 @end
 
-@interface IDEEditorArea : NSObject
-- (IDEEditorContext *)lastActiveEditorContext;
-@end
-
-@interface IDEWorkspaceWindowController : NSObject
-@property (readonly) IDEWorkspaceTabController *activeWorkspaceTabController;
-- (IDEEditorArea *)editorArea;
+@interface PBXWindowController : NSWindowController
+- (id)rootModule;
+- (id)activeModule;
 @end
 
 @interface IDEWorkspace : NSObject
@@ -117,10 +90,14 @@
 @end
 
 @interface BBXcode : NSObject
++ (PBXSourceFileEditor *)currentEditor;
 + (IDEWorkspaceDocument *)currentWorkspaceDocument;
-+ (IDESourceCodeDocument *)currentSourceCodeDocument;
-+ (NSTextView *)currentSourceCodeTextView;
++ (PBXSourceFileDocument *)currentSourceCodeDocumentForEditor:(PBXSourceFileEditor *)editor;
++ (NSTextView *)currentSourceCodeTextViewForEditor:(PBXSourceFileEditor *)editor;
 + (NSArray *)selectedObjCFileNavigableItems;
-+ (BOOL)uncrustifyCodeOfDocument:(IDESourceCodeDocument *)document inWorkspace:(IDEWorkspace *)workspace;
-+ (BOOL)uncrustifyCodeAtRanges:(NSArray *)ranges document:(IDESourceCodeDocument *)document inWorkspace:(IDEWorkspace *)workspace;
++ (BOOL)uncrustifySelectionOfDocument:(PBXSourceFileDocument *)document inTextView:(NSTextView *)textView inWorkspace:(IDEWorkspace *)workspace;
++ (BOOL)uncrustifyCodeOfDocument:(PBXSourceFileDocument *)document inWorkspace:(IDEWorkspace *)workspace;
++ (BOOL)uncrustifyCodeAtRanges:(NSArray *)ranges document:(PBXSourceFileDocument *)document inTextView:(NSTextView *)textView inWorkspace:(IDEWorkspace *)workspace;
++ (void)normalizeCodeAtRange:(NSRange)range document:(PBXSourceFileDocument *)document;
++ (NSString *)stringByTrimmingString:(NSString *)string trimWhitespaceOnlyLines:(BOOL)trimWhitespaceOnlyLines trimTrailingWhitespace:(BOOL)trimTrailingWhitespace;
 @end

@@ -15,7 +15,7 @@
 
 @interface BBPluginUpdater : SUUpdater
 
-+ (instancetype)sharedUpdater;
++ (id)sharedUpdater;
 
 - (void)checkForUpdatesIfNeeded;
 

@@ -9,20 +9,24 @@
 #import "BBUncrustify.h"
 #import <Cocoa/Cocoa.h>
 
-static NSString * const BBUncrustifyXBundleIdentifier = @"nz.co.xwell.UncrustifyX";
+static NSString *const BBUncrustifyXBundleIdentifier = @"nz.co.xwell.UncrustifyX";
 
-NSString * const BBUncrustifyOptionEvictCommentInsertion = @"evictCommentInsertion";
-NSString * const BBUncrustifyOptionSourceFilename = @"sourceFilename";
-NSString * const BBUncrustifyOptionSupplementalConfigurationFolders = @"supplementalConfigurationFolders";
+NSString *const BBUncrustifyOptionEvictCommentInsertion = @"evictCommentInsertion";
+NSString *const BBUncrustifyOptionSourceFilename = @"sourceFilename";
+NSString *const BBUncrustifyOptionSupplementalConfigurationFolders = @"supplementalConfigurationFolders";
 
-static NSString * BBUUIDString() {
-    NSString *uuidString = nil;
-    CFUUIDRef uuid = CFUUIDCreate(NULL);
-    if (uuid) {
-        uuidString = (NSString *)CFUUIDCreateString(NULL, uuid);
-        CFRelease(uuid);
-    }
-    return [NSMakeCollectable(uuidString) autorelease];
+static NSString * BBUUIDString()
+{
+	NSString *uuidString = nil;
+	CFUUIDRef uuid = CFUUIDCreate(NULL);
+
+	if (uuid)
+	{
+		uuidString = (NSString *)CFUUIDCreateString(NULL, uuid);
+		CFRelease(uuid);
+	}
+
+	return [NSMakeCollectable(uuidString) autorelease];
 }
 
 @interface BBUncrustify ()
@@ -31,155 +35,195 @@ static NSString * BBUUIDString() {
 
 @implementation BBUncrustify
 
-+ (NSString *)uncrustifyCodeFragment:(NSString *)codeFragment options:(NSDictionary *)options {
-    if (!codeFragment) return nil;
-    
-    NSString *sourceFileName = options[BBUncrustifyOptionSourceFilename];
-    if (!sourceFileName || sourceFileName.length == 0) {
-        sourceFileName = @"source";
-    }
-    
-    NSURL *codeFragmentFileURL = [[[NSURL fileURLWithPath:NSTemporaryDirectory() isDirectory:YES] URLByAppendingPathComponent:BBUUIDString() isDirectory:YES] URLByAppendingPathComponent:sourceFileName isDirectory:NO];
-    [[NSFileManager defaultManager] createDirectoryAtPath:[codeFragmentFileURL URLByDeletingLastPathComponent].path withIntermediateDirectories:YES attributes:nil error:nil];
-    
-    [codeFragment writeToURL:codeFragmentFileURL atomically:YES encoding:NSUTF8StringEncoding error:nil];
-    
-    NSArray *additionalLookupFolderURLs = options[BBUncrustifyOptionSupplementalConfigurationFolders];
-    if (additionalLookupFolderURLs.count > 0) {
-        NSLog(@"uncrustify additional lookup folders: %@", additionalLookupFolderURLs);
-    }
-    NSURL *configurationFileURL = [BBUncrustify resolvedConfigurationFileURLWithAdditionalLookupFolderURLs:additionalLookupFolderURLs];
-    
-    NSLog(@"uncrustify configuration file: %@", configurationFileURL);
-    
-    if ([options[BBUncrustifyOptionEvictCommentInsertion] boolValue]) {
-        NSString *configuration = [[NSString alloc] initWithContentsOfURL:configurationFileURL encoding:NSUTF8StringEncoding error:nil];
-        BOOL hasChanged = NO;
-        NSString *modifiedConfiguration = [BBUncrustify configurationByRemovingOptions:@[@"cmt_insert_file_"] fromConfiguration:configuration hasChanged:&hasChanged];
-        if (hasChanged) {
-            configurationFileURL = [[NSURL fileURLWithPath:NSTemporaryDirectory() isDirectory:YES] URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.cfg", BBUUIDString()] isDirectory:NO];
-            [modifiedConfiguration writeToURL:configurationFileURL atomically:YES encoding:NSUTF8StringEncoding error:nil];
-        }
-    }
-    
-    [self uncrustifyFilesAtURLs:@[codeFragmentFileURL] configurationFileURL:configurationFileURL];
-    
-    NSError *error = nil;
-    NSString *result = [NSString stringWithContentsOfURL:codeFragmentFileURL encoding:NSUTF8StringEncoding error:&error];
-    
-    if (error) {
-        NSLog(@"%@", error);
-        return nil;
-    }
-    
-    return result;
++ (NSString *)uncrustifyCodeFragment:(NSString *)codeFragment options:(NSDictionary *)options
+{
+	if (!codeFragment)
+	{
+		return nil;
+	}
+
+	NSString *sourceFileName = [options objectForKey:BBUncrustifyOptionSourceFilename];
+
+	if (!sourceFileName || sourceFileName.length == 0)
+	{
+		sourceFileName = @"source";
+	}
+
+	NSURL *codeFragmentFileURL = [[[NSURL fileURLWithPath:NSTemporaryDirectory() isDirectory:YES] URLByAppendingPathComponent:BBUUIDString()] URLByAppendingPathComponent:sourceFileName];
+	[[NSFileManager defaultManager] createDirectoryAtPath:[codeFragmentFileURL URLByDeletingLastPathComponent].path withIntermediateDirectories:YES attributes:nil error:nil];
+
+	[codeFragment writeToURL:codeFragmentFileURL atomically:YES encoding:NSUTF8StringEncoding error:nil];
+
+	NSArray *additionalLookupFolderURLs = [options objectForKey:BBUncrustifyOptionSupplementalConfigurationFolders];
+
+	if (additionalLookupFolderURLs.count > 0)
+	{
+		NSLog(@"uncrustify additional lookup folders: %@", additionalLookupFolderURLs);
+	}
+
+	NSURL *configurationFileURL = [BBUncrustify resolvedConfigurationFileURLWithAdditionalLookupFolderURLs:additionalLookupFolderURLs];
+
+#ifdef DEBUG
+	NSLog(@"uncrustify configuration file: %@", configurationFileURL);
+#endif
+
+	if ([[options objectForKey:BBUncrustifyOptionEvictCommentInsertion] boolValue])
+	{
+		NSString *configuration = [[NSString alloc] initWithContentsOfURL:configurationFileURL encoding:NSUTF8StringEncoding error:nil];
+		BOOL hasChanged = NO;
+		NSString *modifiedConfiguration = [BBUncrustify configurationByRemovingOptions:[NSArray arrayWithObject:@"cmt_insert_file_"] fromConfiguration:configuration hasChanged:&hasChanged];
+
+		if (hasChanged)
+		{
+			configurationFileURL = [[NSURL fileURLWithPath:NSTemporaryDirectory() isDirectory:YES] URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.cfg", BBUUIDString()]];
+			[modifiedConfiguration writeToURL:configurationFileURL atomically:YES encoding:NSUTF8StringEncoding error:nil];
+		}
+	}
+
+	[self uncrustifyFilesAtURLs:[NSArray arrayWithObject:codeFragmentFileURL] configurationFileURL:configurationFileURL];
+	NSError *error = nil;
+	NSString *result = [NSString stringWithContentsOfURL:codeFragmentFileURL encoding:NSUTF8StringEncoding error:&error];
+
+	if (error)
+	{
+		NSLog(@"%@", error);
+		return nil;
+	}
+
+	return result;
 }
 
-+ (NSString *)configurationByRemovingOptions:(NSArray *)options fromConfiguration:(NSString *)originalConfiguration hasChanged:(BOOL *)outHasChanged {
-    __block BOOL hasChanged = NO;
-    
-    NSMutableString *mString = [NSMutableString string];
-    
-    [originalConfiguration enumerateSubstringsInRange:NSMakeRange(0, originalConfiguration.length) options:NSStringEnumerationByLines usingBlock:^(NSString *substring, NSRange substringRange, NSRange enclosingRange, BOOL *stop) {
-        NSString *line = [[substring stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] lowercaseString];
-        BOOL optionFound = NO;
-        for (NSString * option in options) {
-            NSRange range = [line rangeOfString:option options:NSCaseInsensitiveSearch | NSAnchoredSearch];
-            optionFound = (range.location != NSNotFound);
-            if (optionFound) {
-                hasChanged = YES;
-                break;
-            }
-        }
-        if (!optionFound) {
-            [mString appendString:substring];
-            [mString appendString:@"\n"];
-        }
-    }];
-    
-    if (outHasChanged != NULL) {
-        *outHasChanged = hasChanged;
-    }
-    
-    return [NSString stringWithString:mString];
++ (NSString *)configurationByRemovingOptions:(NSArray *)options fromConfiguration:(NSString *)originalConfiguration hasChanged:(BOOL *)outHasChanged
+{
+	__block BOOL hasChanged = NO;
+
+	NSMutableString *mString = [NSMutableString string];
+
+	[originalConfiguration enumerateSubstringsInRange:NSMakeRange(0, originalConfiguration.length) options:NSStringEnumerationByLines usingBlock:^(NSString *substring, NSRange substringRange, NSRange enclosingRange, BOOL *stop) {
+		NSString *line = [[substring stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] lowercaseString];
+		BOOL optionFound = NO;
+
+		for (NSString * option in options)
+		{
+			NSRange range = [line rangeOfString:option options:NSCaseInsensitiveSearch | NSAnchoredSearch];
+			optionFound = (range.location != NSNotFound);
+
+			if (optionFound)
+			{
+				hasChanged = YES;
+				break;
+			}
+		}
+
+		if (!optionFound)
+		{
+			[mString appendString:substring];
+			[mString appendString:@"\n"];
+		}
+	}];
+
+	if (outHasChanged != NULL)
+	{
+		*outHasChanged = hasChanged;
+	}
+
+	return [NSString stringWithString:mString];
 }
 
-+ (NSURL *)builtInConfigurationFileURL {
-    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
-    return [bundle URLForResource:@"uncrustify" withExtension:@"cfg"];
++ (NSURL *)builtInConfigurationFileURL
+{
+	NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+	return [bundle URLForResource:@"uncrustify" withExtension:@"cfg"];
 }
 
-+ (NSArray *)makeConfigurationFileURLsFromFolderURLs:(NSArray *)folderURLs {
-    NSMutableArray *mArray = [NSMutableArray array];
-    for (NSURL *folderURL in folderURLs) {
-        [mArray addObject:[folderURL URLByAppendingPathComponent:@".uncrustifyconfig" isDirectory:NO]];
-        [mArray addObject:[folderURL URLByAppendingPathComponent:@"uncrustify.cfg" isDirectory:NO]];
-    }
-    return [NSArray arrayWithArray:mArray];
++ (NSArray *)makeConfigurationFileURLsFromFolderURLs:(NSArray *)folderURLs
+{
+	NSMutableArray *mArray = [NSMutableArray array];
+
+	for (NSURL *folderURL in folderURLs)
+	{
+		[mArray addObject:[folderURL URLByAppendingPathComponent:@".uncrustifyconfig"]];
+		[mArray addObject:[folderURL URLByAppendingPathComponent:@"uncrustify.cfg"]];
+	}
+
+	return [NSArray arrayWithArray:mArray];
 }
 
-+ (NSArray *)userConfigurationFileURLs {
-    NSURL *homeDirectoryURL = [NSURL fileURLWithPath:NSHomeDirectory()];
-    return [BBUncrustify makeConfigurationFileURLsFromFolderURLs:@[homeDirectoryURL]];
++ (NSArray *)userConfigurationFileURLs
+{
+	NSURL *homeDirectoryURL = [NSURL fileURLWithPath:NSHomeDirectory()];
+	return [BBUncrustify makeConfigurationFileURLsFromFolderURLs:[NSArray arrayWithObject:homeDirectoryURL]];
 }
 
-+ (NSURL *)resolvedConfigurationFileURLWithAdditionalLookupFolderURLs:(NSArray *)lookupFolderURLs { // additionalLocations can be nil (optional parameter)
-    // folders are ordered by priority
-    NSMutableArray *configurationURLs = [NSMutableArray array];
-    if (lookupFolderURLs) {
-        [configurationURLs addObjectsFromArray:[BBUncrustify makeConfigurationFileURLsFromFolderURLs:lookupFolderURLs]];
-    }
-    [configurationURLs addObjectsFromArray:[BBUncrustify userConfigurationFileURLs]];
-    
-    for (NSURL *url in configurationURLs) {
-        if ([[NSFileManager defaultManager] fileExistsAtPath:url.path]) {
-            return url;
-        }
-    }
-    return [BBUncrustify builtInConfigurationFileURL];
++ (NSURL *)resolvedConfigurationFileURLWithAdditionalLookupFolderURLs:(NSArray *)lookupFolderURLs // additionalLocations can be nil (optional parameter)
+{ // folders are ordered by priority
+	NSMutableArray *configurationURLs = [NSMutableArray array];
+
+	if (lookupFolderURLs)
+	{
+		[configurationURLs addObjectsFromArray:[BBUncrustify makeConfigurationFileURLsFromFolderURLs:lookupFolderURLs]];
+	}
+
+	[configurationURLs addObjectsFromArray:[BBUncrustify userConfigurationFileURLs]];
+
+	for (NSURL *url in configurationURLs)
+	{
+		if ([[NSFileManager defaultManager] fileExistsAtPath:url.path])
+		{
+			return url;
+		}
+	}
+
+	return [BBUncrustify builtInConfigurationFileURL];
 }
 
-+ (void)uncrustifyFilesAtURLs:(NSArray *)fileURLs configurationFileURL:(NSURL *)configurationFileURL {
-    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
-    
-    //NSLog(@"uncrustify configuration file: %@",configurationFileURL);
-    
-    NSURL *executableFileURL = [bundle URLForResource:@"uncrustify" withExtension:@""];
-    
-    BOOL filesExists = [[NSFileManager defaultManager] fileExistsAtPath:configurationFileURL.path] && [[NSFileManager defaultManager] fileExistsAtPath:configurationFileURL.path];
-    
-    if (!filesExists) {
-        return;
-    }
-    
-    [fileURLs enumerateObjectsWithOptions:0 usingBlock:^(NSURL *fileURL, NSUInteger idx, BOOL *stop) {
-        if ([[NSFileManager defaultManager] fileExistsAtPath:fileURL.path]) {
-            NSMutableArray *args = NSMutableArray.array;
-            [args addObjectsFromArray:@[@"-l", @"OC", @"--frag", @"--no-backup"]];
-            [args addObjectsFromArray:@[@"-c", configurationFileURL.path, fileURL.path]];
-            
-            NSPipe *outputPipe = NSPipe.pipe;
-            NSPipe *errorPipe = NSPipe.pipe;
-            
-            NSTask *task = [[NSTask alloc] init];
-            task.launchPath = executableFileURL.path;
-            task.arguments = args;
-            
-            task.standardOutput = outputPipe;
-            task.standardError = errorPipe;
-            
-            [outputPipe.fileHandleForReading readToEndOfFileInBackgroundAndNotify];
-            [errorPipe.fileHandleForReading readToEndOfFileInBackgroundAndNotify];
-            
-            [task launch];
-            [task waitUntilExit];
-            [task release];
-        }
-    }];
++ (void)uncrustifyFilesAtURLs:(NSArray *)fileURLs configurationFileURL:(NSURL *)configurationFileURL
+{
+	NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+
+#ifdef DEBUG
+	NSLog(@"uncrustify configuration file: %@", configurationFileURL);
+#endif
+
+	NSURL *executableFileURL = [bundle URLForResource:@"uncrustify" withExtension:@""];
+
+	BOOL filesExists = [[NSFileManager defaultManager] fileExistsAtPath:configurationFileURL.path] && [[NSFileManager defaultManager] fileExistsAtPath:configurationFileURL.path];
+
+	if (!filesExists)
+	{
+		return;
+	}
+
+	[fileURLs enumerateObjectsWithOptions:0 usingBlock:^(id fileURL, NSUInteger idx, BOOL *stop) {
+		if ([[NSFileManager defaultManager] fileExistsAtPath:[fileURL path]])
+		{
+			NSMutableArray *args = [NSMutableArray arrayWithCapacity:0];
+			[args addObjectsFromArray:[NSArray arrayWithObjects:@"-l", @"OC", @"--frag", @"--no-backup", nil]];
+			[args addObjectsFromArray:[NSArray arrayWithObjects:@"-c", [configurationFileURL path], [fileURL path], nil]];
+
+			NSPipe *outputPipe = NSPipe.pipe;
+			NSPipe *errorPipe = NSPipe.pipe;
+
+			NSTask *task = [[NSTask alloc] init];
+			task.launchPath = executableFileURL.path;
+			task.arguments = args;
+
+			task.standardOutput = outputPipe;
+			task.standardError = errorPipe;
+
+			[outputPipe.fileHandleForReading readToEndOfFileInBackgroundAndNotify];
+			[errorPipe.fileHandleForReading readToEndOfFileInBackgroundAndNotify];
+
+			[task launch];
+			[task waitUntilExit];
+			[task release];
+		}
+	}];
 }
 
-+ (NSURL *)uncrustifyXApplicationURL {
-    return [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:BBUncrustifyXBundleIdentifier];
++ (NSURL *)uncrustifyXApplicationURL
+{
+	return [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:BBUncrustifyXBundleIdentifier];
 }
 
 @end
