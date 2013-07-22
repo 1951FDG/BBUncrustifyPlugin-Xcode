@@ -39,22 +39,27 @@
 			menuItem = [[NSMenuItem alloc] initWithTitle:@"Uncrustify Selection" action:@selector(uncrustifySelection:) keyEquivalent:@""];
 			[menuItem setTarget:self];
 			[[editMenuItem submenu] addItem:menuItem];
+			[menuItem release];
 
 			menuItem = [[NSMenuItem alloc] initWithTitle:@"Uncrustify Selected Files" action:@selector(uncrustifySelectedFiles:) keyEquivalent:@""];
 			[menuItem setTarget:self];
 			[[editMenuItem submenu] addItem:menuItem];
+			[menuItem release];
 
 			menuItem = [[NSMenuItem alloc] initWithTitle:@"Uncrustify Active File" action:@selector(uncrustifyActiveFile:) keyEquivalent:@""];
 			[menuItem setTarget:self];
 			[[editMenuItem submenu] addItem:menuItem];
+			[menuItem release];
 
 			menuItem = [[NSMenuItem alloc] initWithTitle:@"Uncrustify Selected Lines" action:@selector(uncrustifySelectedLines:) keyEquivalent:@""];
 			[menuItem setTarget:self];
 			[[editMenuItem submenu] addItem:menuItem];
+			[menuItem release];
 
 			menuItem = [[NSMenuItem alloc] initWithTitle:@"Open with UncrustifyX" action:@selector(openWithUncrustifyX:) keyEquivalent:@""];
 			[menuItem setTarget:self];
 			[[editMenuItem submenu] addItem:menuItem];
+			[menuItem release];
 
 			[[BBPluginUpdater sharedUpdater] setDelegate:self];
 

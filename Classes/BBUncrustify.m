@@ -69,7 +69,7 @@ static NSString * BBUUIDString()
 
 	if ([[options objectForKey:BBUncrustifyOptionEvictCommentInsertion] boolValue])
 	{
-		NSString *configuration = [[NSString alloc] initWithContentsOfURL:configurationFileURL encoding:NSUTF8StringEncoding error:nil];
+		NSString *configuration = [NSString stringWithContentsOfURL:configurationFileURL encoding:NSUTF8StringEncoding error:nil];
 		BOOL hasChanged = NO;
 		NSString *modifiedConfiguration = [BBUncrustify configurationByRemovingOptions:[NSArray arrayWithObject:@"cmt_insert_file_"] fromConfiguration:configuration hasChanged:&hasChanged];
 

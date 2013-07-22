@@ -238,6 +238,7 @@ NSString * BBStringByTrimmingTrailingCharactersFromString(NSString *string, NSCh
 		{
 			IDENavigableItemCoordinator *coordinator = [[NSClassFromString(@"IDENavigableItemCoordinator") alloc] init];
 			IDENavigableItem *navigableItem = [coordinator structureNavigableItemForDocumentURL:document.fileURL inWorkspace:workspace error:nil];
+			[coordinator release];
 
 			if (navigableItem)
 			{
@@ -284,6 +285,7 @@ NSString * BBStringByTrimmingTrailingCharactersFromString(NSString *string, NSCh
 		{
 			IDENavigableItemCoordinator *coordinator = [[NSClassFromString(@"IDENavigableItemCoordinator") alloc] init];
 			IDENavigableItem *navigableItem = [coordinator structureNavigableItemForDocumentURL:document.fileURL inWorkspace:workspace error:nil];
+			[coordinator release];
 
 			if (navigableItem)
 			{
@@ -416,6 +418,7 @@ NSString * BBStringByTrimmingTrailingCharactersFromString(NSString *string, NSCh
 	{
 		IDENavigableItemCoordinator *coordinator = [[NSClassFromString(@"IDENavigableItemCoordinator") alloc] init];
 		IDENavigableItem *navigableItem = [coordinator structureNavigableItemForDocumentURL:document.fileURL inWorkspace:workspace error:nil];
+		[coordinator release];
 
 		if (navigableItem)
 		{
